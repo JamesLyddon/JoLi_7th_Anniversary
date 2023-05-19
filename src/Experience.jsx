@@ -1,9 +1,9 @@
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useMatcapTexture, Center, Text3D, OrbitControls, useTexture } from '@react-three/drei'
-
+import { useSpring, animated, config } from '@react-spring/three'
 import * as THREE from 'three'
 import { useFrame } from '@react-three/fiber'
-
+import { Depth, LayerMaterial, Noise } from 'lamina'
 // fonts
 const paytone = './fonts/Paytone One_Regular.json'
 const helvetiker = './fonts/helvetiker_regular.typeface.json'
@@ -18,6 +18,13 @@ const material3 = new THREE.MeshMatcapMaterial()
 const material4 = new THREE.MeshMatcapMaterial()
 
 export default function Experience() {
+	const [active, setActive] = useState(false)
+
+	const myMesh = useRef()
+	const sphereRef = useRef()
+	// spring animation
+	const { scale } = useSpring({ scale: active ? 1.5 : 1, config: config.wobbly })
+
 	const matcap = useTexture('/matcaps/MatCapCopper.png')
 	const matcap2 = useTexture('/matcaps/1.png')
 	const matcap3 = useTexture('/matcaps/430404_BD9295_7E1E21_94544C.png')
@@ -37,9 +44,51 @@ export default function Experience() {
 		material4.needsUpdate = true
 	}, [])
 
+	useFrame((state, delta) => {
+		sphereRef.current.rotation.x += delta * 0.5
+		sphereRef.current.rotation.y += delta * 0.5
+	})
+
 	return (
 		<>
 			<OrbitControls makeDefault />
+
+			<mesh
+				scale={100}
+				ref={sphereRef}
+			>
+				<sphereGeometry args={[1, 64, 64]} />
+				<LayerMaterial side={THREE.BackSide}>
+					<Depth
+						colorA='#69b6ff'
+						colorB='#42a3ff'
+						alpha={1}
+						mode='normal'
+						near={130}
+						far={200}
+						origin={[100, 100, -100]}
+					/>
+					<Noise
+						mapping='local'
+						type='white'
+						scale={100}
+						colorA='white'
+						colorB='black'
+						mode='subtract'
+						alpha={0.15}
+					/>
+				</LayerMaterial>
+			</mesh>
+
+			{/* <animated.mesh
+				scale={scale}
+				onClick={() => setActive(!active)}
+				ref={myMesh}
+			>
+				<boxGeometry />
+				<meshBasicMaterial />
+			</animated.mesh> */}
+
 			<Center
 				position={[0, 1.5, 0]}
 				rotation-x={-Math.PI * 0.1}
